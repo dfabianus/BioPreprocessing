@@ -1,6 +1,5 @@
 module BioPreprocessing
 
-module Observers
 export x_OGin, x_CGin, EXH2O, INERT, Q_CO2, Q_O2, Q_S, r, RQ, θ, convert_units, kalman, kalman_vec, kalman_state_derivative, kalman_flow_rate
 
 using DataFrames 
