@@ -7,9 +7,11 @@ using LinearAlgebra
 using Interpolations
 using HampelFilter
 using GLM
+
 #using CairoMakie
 
 ######## KALMAN FILTERING ######################################
+
 function kalman(zₖ, xₖ = [0.0 0.0]', Pₖ = [10 0; 0 10]; Δt = 1.0, Q = [0 0; 0 0.01], R = 0.04)
     A = [1.0 Δt; 0.0 1.0]
     C = [1.0 0.0]
