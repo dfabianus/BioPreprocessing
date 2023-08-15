@@ -192,7 +192,7 @@ function K2S1_dynamical_monod(t_S, V_L, x, Qm, Qc=0, Mm=[30,44,32], Mc=[26.5], c
     rm = monod_kinetics_special(x,Qm.*Mm, V_L; q_Smax=qSmax, qSmax_2 = qSmax2, k_S=kS)
     r_hat, h = K2S1(rm./Mm, carbon, gamma, sigma)
     if x[1] < 12
-        #r_hat[1] = -0.37 * r_hat[2]
+        r_hat[1] = -0.4 * r_hat[2]
         #r_hat[1] = -0.7 * r_hat[2]
     end
     Q = vcat(Qc,Qm)
