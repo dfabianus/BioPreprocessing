@@ -63,7 +63,7 @@ function F_R(y::DataFrame, weight_signal_name::String="m_R"; density = 1000, ini
     # More methods can be implemented based on other approaches e.g. moving averages
     return kalman_flow_rate(y.time, y[!,weight_signal_name], density, init_vol, xₖ, Pₖ; Q = Q, R = R).flow_rate
 end
-function V_L(y::DataFrame, weight_signal_name::String="m_L", density = 1000, init_vol = 1.5, xₖ = [0 0]', Pₖ = [10 0; 0 10]; Q = [0 0; 0 0.01], R = 0.04) 
+function V_L(y::DataFrame, weight_signal_name::String="m_L"; density = 1000, init_vol = 1.5, xₖ = [0 0]', Pₖ = [10 0; 0 10], Q = [0 0; 0 0.01], R = 0.04) 
     # This is the feed rate calculation method using kalman filtering.
     # More methods can be implemented based on other approaches e.g. moving averages
     return kalman_flow_rate(y.time, y[!,weight_signal_name], density, init_vol, xₖ, Pₖ; Q = Q, R = R).volume
