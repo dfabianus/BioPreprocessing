@@ -1,14 +1,21 @@
 module BioPreprocessing
 
-export x_OGin, x_CGin, EXH2O, INERT, Q_CO2, Q_O2, Q_S, r, RQ, θ, convert_units, kalman, kalman_vec, kalman_state_derivative, kalman_flow_rate
+export K2S1m!, datafun, x_OGin, x_CGin, EXH2O, INERT, Q_CO2, Q_O2, Q_S, r, RQ, θ, convert_units, kalman, kalman_vec, kalman_state_derivative, kalman_flow_rate
 
 using DataFrames 
 using LinearAlgebra
 using Interpolations
 using HampelFilter
 using GLM
+using DifferentialEquations
+#using ModelingToolkit
 
-#using CairoMakie
+######## SYMBOLIC FUNCTIONS FROM DATA ##########################
+function datafun(t,tx,x)
+    x_int = Interpolations.linear_interpolation(tx, x, extrapolation_bc=Line())
+    return x_int(t)
+end
+
 
 ######## KALMAN FILTERING ######################################
 
@@ -162,19 +169,35 @@ function K2S1(rm, carbon, gamma, sigma)
     return (r=vcat(xc_best, rm_best), h=h)
 end
 
-function K2S1_model(V_L, x, Qm, Qc=0, Mm=[30,44,32], Mc=[26.5], carbon=[1,1,1,0], gamma = [4.113, 4, 0, -4], sigma=Diagonal([0.03,0.03,0.03]); kinetics=monod_kinetics, dynamics=bioreactor_continuous)
-    rm = kinetics(x,Qm.*Mm, V_L)
-    r_hat, h = K2S1(rm./Mm, carbon, gamma, sigma)
-    Q = vcat(Qc,Qm)
+function K2S1m!(dx,x,p,t)
+    Q_X=0.0 # initialize
+    Mm=[30,44,32]
+    Mc=[26.5]
+    carbon=[1,1,1,0]
+    gamma = [4.113, 4, 0, -4]
+    sigma=Diagonal([0.03,0.03,0.03])
+    kinetics=monod_kinetics
+    dynamics=bioreactor_continuous
+    #Q_S, Q_CO2, Q_O2, V_L = p
+
+    Q = vcat(Q_X,p.Q_S(t),p.Q_CO2(t),p.Q_O2(t))
     M = vcat(Mc,Mm)
-    dx = dynamics(x,Q.*M,r_hat.*M)
-    return dx, r_hat, h
+
+    rm = kinetics(x, Q[2:end].*Mm, p.V_L(t), p.qSmax(t), p.kS(t))
+    r_hat, h = K2S1(rm./Mm, carbon, gamma, sigma)
+
+    if x[1] < 7
+        #r_hat[1] = -0.37 * r_hat[2]
+        r_hat[1] = -0.45 * r_hat[2]
+    end
+    
+    dx[:] = [Qᵢ+rᵢ for (Qᵢ,rᵢ) in zip(Q.*M,r_hat.*M)]
 end
 
-function K2S1_fitting_problem(V_L, x, Qm, Qc=0, Mm=[30,44,32], Mc=[26.5], carbon=[1,1,1,0], gamma = [4.113, 4, 0, -4], sigma=Diagonal([0.03,0.03,0.03]); kinetics=monod_kinetics_special, dynamics=bioreactor_continuous)
-    dx = K2S1_model(V_L, x, Qm, Qc, Mm, Mc, carbon, gamma, sigma; kinetics, dynamics)
-    prob = ODEProblem(f2,u0,tspan,p)
-end
+# function K2S1_fitting_problem(V_L, x, Qm, Qc=0, Mm=[30,44,32], Mc=[26.5], carbon=[1,1,1,0], gamma = [4.113, 4, 0, -4], sigma=Diagonal([0.03,0.03,0.03]); kinetics=monod_kinetics_special, dynamics=bioreactor_continuous)
+#     dx = K2S1_model(V_L, x, Qm, Qc, Mm, Mc, carbon, gamma, sigma; kinetics, dynamics)
+#     prob = ODEProblem(f2,u0,tspan,p)
+# end
 
 function K2S1_dynamical(t_S, V_L, x, Qm, Qc=0, Mm=[30,44,32], Mc=[26.5], carbon=[1,1,1,0], gamma = [4.113, 4, 0, -4], sigma=Diagonal([0.03,0.03,0.03]); kinetics=monod_kinetics, dynamics=bioreactor)
     rm = kinetics(x,Qm.*Mm, V_L)
@@ -256,7 +279,7 @@ function K2S1(y::DataFrame, carbon=[1,1,1,0], gamma = [4, -4, 0, 4.113], sigma=D
     y.rX_K2S1 = [K2S1([-S,O2,CO2],carbon,gamma,sigma).r[1] for (S,O2,CO2) in zip(Q[:,1], Q[:,2], Q[:,3])]
     return y
 end
-function monod_kinetics(x,Qm,V_L; q_Smax=1.2,k_S=0.4)
+function monod_kinetics(x,Qm,V_L,q_Smax,k_S)
     # from Qm build rm
     m_X, m_S, _, _ = x
     Q_S, Q_CO2, Q_O2 = Qm
