@@ -1,0 +1,29 @@
+processName: "20230503_HR01_F20_2"
+parameters:
+  VL0: 1.5
+  Ind_sample: 12
+  c_SR: 460.0
+ports_online:
+  m_A: "WeightAcid"
+  T: "ReactorTemperature"
+  x_CO2: "CO2"
+  F_O2w: "OxygenIN_SptExt"
+  F_AIR: "AIR N2 IN"
+  pH: "pH"
+  F_O2: "OxygenIn"
+  x_O2: "O2"
+  N_St: "AgitatorSpeed"
+  Tw: "ReactorTemperature_SptExt"
+  pHw: "pH_SptExt"
+  F_AIRw: "AIRIN_SptExt"
+  m_R: "WeightFeed2"
+  m_B: "WeightBase"
+  m_L: "WeightReactor"
+  p_O2: "DO2Redox"
+ports_offline:
+  c_S: "offline Glucose [g/l]"
+  OD: "offline OD [ ]"
+  DCW: "offline BDW [g/l]"
+  c_Ac: "Acetate_BioHT"
+unit_ref_dict: ~
+HR01_F20: ~

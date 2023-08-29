@@ -5,20 +5,23 @@ using ModelingToolkit
 using DifferentialEquations
 using Plots
 
+# load the testing process dataset
 include("load_processes.jl")
+data = load_process(process_pathes)["EXPORTDATA_20230503_HR01_F20_2"]
 
 @testset "BioPreprocessing.jl" begin
     # Write your tests here.
 end
 
+
 ##### TEST K2S1 #####
 function test_1()
-    tx = P1["online_preprocessed"].time
-    tInd = P1["offline_preprocessed"].time[P1["metadata_processed"]["parameters"]["Ind_sample"]]
-    Q_Sf(t) = BioPreprocessing.datafun(t, tx, P1["online_preprocessed"].Q_S)
-    Q_CO2f(t) = BioPreprocessing.datafun(t, tx, P1["online_preprocessed"].Q_CO2)
-    Q_O2f(t) = BioPreprocessing.datafun(t, tx, P1["online_preprocessed"].Q_O2)
-    V_Lf(t) = BioPreprocessing.datafun(t, tx, P1["online_preprocessed"].V_L)
+    tx = data["online_preprocessed"].time
+    tInd = data["offline_preprocessed"].time[data["metadata_processed"]["parameters"]["Ind_sample"]]
+    Q_Sf(t) = BioPreprocessing.datafun(t, tx, data["online_preprocessed"].Q_S)
+    Q_CO2f(t) = BioPreprocessing.datafun(t, tx, data["online_preprocessed"].Q_CO2)
+    Q_O2f(t) = BioPreprocessing.datafun(t, tx, data["online_preprocessed"].Q_O2)
+    V_Lf(t) = BioPreprocessing.datafun(t, tx, data["online_preprocessed"].V_L)
     tspan = (tx[1], tx[end])
     p = (Q_S = Q_Sf, 
         Q_CO2 = Q_CO2f,
@@ -34,6 +37,11 @@ function test_1()
     display(p)
 end
 test_1()
+
+
+
+
+
 #### Prototyping
 tx = [1.0,2.0,3.0,4.0,7.0,8.0,9.0]
 x = [0,0,0,0,0,0.05,0.05]
