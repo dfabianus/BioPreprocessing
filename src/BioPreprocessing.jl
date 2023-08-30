@@ -5,7 +5,7 @@ export K2S1m!, datafun, x_OGin, x_CGin, EXH2O, INERT, Q_CO2, Q_O2, Q_S, r, RQ, Î
 using DataFrames 
 using LinearAlgebra
 using Interpolations
-using HampelFilter
+#using HampelFilter
 using GLM
 using DifferentialEquations
 
