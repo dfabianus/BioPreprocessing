@@ -5,7 +5,7 @@ using YAML
 base_data_path = "data/"
 process_pathes = readdir(base_data_path, join=true)
 
-function load_process(process_pathes=process_pathes)
+function load_processes(process_pathes=process_pathes)
     processes = Dict()
     for process in process_pathes
         processes[splitpath(process)[end]] = Dict{Any,Any}("files" => readdir(process, join=true))
@@ -21,4 +21,27 @@ function load_process(process_pathes=process_pathes)
         end
     end
     return processes
+end
+
+function write_processes(data)
+    for (key,process) in data
+        #process = deepcopy(process)
+        signals_offline = process["offline_preprocessed"] 
+        signals_online = process["online_preprocessed"]
+        metaData = process["metadata_processed"]
+        parameters = metaData["parameters"]
+        
+        # save offline data
+        CSV.write(joinpath(base_data_path*key,"offline_preprocessed.csv"), signals_offline)
+        
+        # save online data
+        CSV.write(joinpath(base_data_path*key,"online_preprocessed.csv"), signals_online)
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_monod.csv"), process["results_K2S1_monod"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_without_corr.csv"), process["results_K2S1_without_corr"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_no_kinetics.csv"), process["results_K2S1_no_kinetics"])
+
+        YAML.write_file(joinpath(base_data_path*key,"metadata_processed.yml"), metaData)
+        
+        println("Saving of process $key finished.")
+    end
 end
