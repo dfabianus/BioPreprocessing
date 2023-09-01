@@ -191,6 +191,66 @@ function K2S1m(x,p,t)
     return Q_g .+ r_hat_g, r_hat_g, h
 end
 
+function K2S1m_C(x,p,t)
+
+    i_known = [2,3,4]
+    i_unknown = [1]
+
+    M = [26.5, 30, 44, 32]
+
+    E = [1 1 1 0;]
+    
+    c_S = x[2] ./ p.V_L(t)
+    qS = p.qSmax(t) * c_S / (p.kS(t) + c_S)
+    rS = -qS * x[1]
+
+    # constructing Q and r in mol/h and g/h
+    Q_mol = vcat(zeros(length(i_unknown)), [Q(t) for Q in p.Q_known])
+    Q_g = Q_mol .* M
+    r_g = vcat(zeros(length(i_unknown)), rS, Q_g[3:4])
+    r_mol = r_g ./ M
+
+    r_hat_mol, h = K2S1(r_mol, E, i_known, i_unknown)
+    r_hat_g = r_hat_mol .* M
+    # if x[1] < 7
+    #     #r_hat[1] = -0.37 * r_hat[2]
+    #     r_hat[1] = -0.45 * r_hat[2]
+    # end
+    
+    #dx[:] = [Qᵢ+rᵢ for (Qᵢ,rᵢ) in zip(Q_g,r_hat_g)]
+    return Q_g .+ r_hat_g, r_hat_g, h
+end
+
+function K2S1m_DOR(x,p,t)
+
+    i_known = [2,3,4]
+    i_unknown = [1]
+
+    M = [26.5, 30, 44, 32]
+
+    E = [4.113 4 0 -4;]
+    
+    c_S = x[2] ./ p.V_L(t)
+    qS = p.qSmax(t) * c_S / (p.kS(t) + c_S)
+    rS = -qS * x[1]
+
+    # constructing Q and r in mol/h and g/h
+    Q_mol = vcat(zeros(length(i_unknown)), [Q(t) for Q in p.Q_known])
+    Q_g = Q_mol .* M
+    r_g = vcat(zeros(length(i_unknown)), rS, Q_g[3:4])
+    r_mol = r_g ./ M
+
+    r_hat_mol, h = K2S1(r_mol, E, i_known, i_unknown)
+    r_hat_g = r_hat_mol .* M
+    # if x[1] < 7
+    #     #r_hat[1] = -0.37 * r_hat[2]
+    #     r_hat[1] = -0.45 * r_hat[2]
+    # end
+    
+    #dx[:] = [Qᵢ+rᵢ for (Qᵢ,rᵢ) in zip(Q_g,r_hat_g)]
+    return Q_g .+ r_hat_g, r_hat_g, h
+end
+
 function K2S1m_call!(dx,x,p,t)
     dx[:], _, _ = K2S1m(x,p,t)
 end
@@ -205,6 +265,19 @@ function K2S1m_obs_h(x,p,t)
     return h
 end
 
+function K2S1m_callC!(dx,x,p,t)
+    dx[:], _, _ = K2S1mC(x,p,t)
+end
+
+function K2S1m_obsC(x,p,t)
+    _, r, _ = K2S1mC(x,p,t)
+    return r
+end
+
+function K2S1m_obs_hC(x,p,t)
+    _, _, h = K2S1mC(x,p,t)
+    return h
+end
 
 function calc_K2S1(tx, Q_S, Q_CO2, Q_O2, V_L, x0; tInd=24, qSmax_0=1.25, qSmax_1=0.24, kS_0=0.1)
     Q_known = [(t) -> datafun(t, tx, Q) for Q in [Q_S, Q_CO2, Q_O2]]
@@ -228,6 +301,42 @@ function calc_K2S1(tx, Q_S, Q_CO2, Q_O2, V_L, x0; tInd=24, qSmax_0=1.25, qSmax_1
 
     r = [K2S1m_obs(x_i,p,t_i) for (x_i,t_i) in zip(sol(tx).u,tx)]
     h = [K2S1m_obs_h(x_i,p,t_i) for (x_i,t_i) in zip(sol(tx).u,tx)]
+
+    # make df out of list of lists
+    df_r = rename(DataFrame(mapreduce(permutedims, vcat, r), :auto),
+    :x1 => :K2S1_rX, 
+    :x2 => :K2S1_rS, 
+    :x3 => :K2S1_rCO2, 
+    :x4 => :K2S1_rO2
+    )
+
+    df_h = rename(DataFrame(K2S1_h=h))
+
+    return hcat(df_m, df_c, df_r, df_h)
+end
+
+function calc_K2S1C(tx, Q_S, Q_CO2, Q_O2, V_L, x0; tInd=24, qSmax_0=1.25, qSmax_1=0.24, kS_0=0.1)
+    Q_known = [(t) -> datafun(t, tx, Q) for Q in [Q_S, Q_CO2, Q_O2]]
+    V_Lf(t) = datafun(t, tx, V_L)
+    tspan = (tx[1], tx[end])
+    p = (Q_known = Q_known,
+        V_L = V_Lf,
+        qSmax = (t) -> t <= tInd ? qSmax_0 : qSmax_1,
+        kS = (t) -> kS_0
+        )
+    prob = ODEProblem(K2S1m_callC!,x0,tspan,p)
+    sol = solve(prob, AutoTsit5(TRBDF2()))
+    df_m = rename(sol_to_df(sol, tx), 
+        :value1 => :K2S1_mX, 
+        :value2 => :K2S1_mS, 
+        :value3 => :K2S1_mCO2, 
+        :value4 => :K2S1_mO2
+    ) 
+    df_c = df_m[!,[:K2S1_mX,:K2S1_mS]] ./ V_L
+    rename!(df_c, :K2S1_mX => :K2S1_cX, :K2S1_mS => :K2S1_cS)
+
+    r = [K2S1m_obsC(x_i,p,t_i) for (x_i,t_i) in zip(sol(tx).u,tx)]
+    h = [K2S1m_obs_hC(x_i,p,t_i) for (x_i,t_i) in zip(sol(tx).u,tx)]
 
     # make df out of list of lists
     df_r = rename(DataFrame(mapreduce(permutedims, vcat, r), :auto),
