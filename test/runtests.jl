@@ -1,15 +1,97 @@
 using Revise
 using BioPreprocessing
 using Test
-#using ModelingToolkit
 using DifferentialEquations
-using Plots
 
 # load the testing process dataset
 include("load_processes.jl")
 data = load_processes(process_pathes)
 
-write_processes(data_w)
+data["EXPORTDATA_20230503_HR01_F20_2"]["metadata_processed"]["parameters"]["qSmax_0"] = 1.20
+data["EXPORTDATA_20230503_HR01_F20_2"]["metadata_processed"]["parameters"]["qSmax_1"] = 0.247
+data["EXPORTDATA_20230503_HR01_F20_2"]["metadata_processed"]["parameters"]["x0"] = [0.45, 19*1.5, 0, 0]
+data["EXPORTDATA_20230503_HR01_F20_2"]["metadata_processed"]["parameters"]["x1"] = [10*data["EXPORTDATA_20230503_HR01_F20_2"]["online_preprocessed"].V_L[1], 0, 0, 0]
+
+
+for (key, process) in data
+    results_K2S1_monod = BioPreprocessing.calc_K2S1C(process["online_preprocessed"].time[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_S[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_CO2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_O2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].V_L[process["online_preprocessed"].time.>7],
+                        process["metadata_processed"]["parameters"]["x1"],
+                        qSmax_0 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        qSmax_1 = process["metadata_processed"]["parameters"]["qSmax_1"],
+                        kS_0 = 0.3,
+                        )
+
+    results_K2S1_without_corr = BioPreprocessing.calc_K2S1C(process["online_preprocessed"].time[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_S[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_CO2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_O2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].V_L[process["online_preprocessed"].time.>7],
+                        process["metadata_processed"]["parameters"]["x1"],
+                        qSmax_0 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        qSmax_1 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        kS_0 = 0.3,
+                        )
+
+    results_K2S1_no_kinetics = BioPreprocessing.calc_K2S1C(process["online_preprocessed"].time[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_S[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_CO2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_O2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].V_L[process["online_preprocessed"].time.>7],
+                        process["metadata_processed"]["parameters"]["x1"],
+                        qSmax_0 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        qSmax_1 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        kS_0 = 0.3,
+                        )
+    process["results_K2S1_monod_C"] = results_K2S1_monod
+    process["results_K2S1_without_corr_C"] = results_K2S1_without_corr
+    process["results_K2S1_no_kinetics_C"] = results_K2S1_no_kinetics
+end
+
+for (key, process) in data
+    results_K2S1_monod = BioPreprocessing.calc_K2S1DOR(process["online_preprocessed"].time[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_S[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_CO2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_O2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].V_L[process["online_preprocessed"].time.>7],
+                        process["metadata_processed"]["parameters"]["x1"],
+                        qSmax_0 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        qSmax_1 = process["metadata_processed"]["parameters"]["qSmax_1"],
+                        kS_0 = 0.3,
+                        )
+
+    results_K2S1_without_corr = BioPreprocessing.calc_K2S1DOR(process["online_preprocessed"].time[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_S[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_CO2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_O2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].V_L[process["online_preprocessed"].time.>7],
+                        process["metadata_processed"]["parameters"]["x1"],
+                        qSmax_0 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        qSmax_1 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        kS_0 = 0.3,
+                        )
+
+    results_K2S1_no_kinetics = BioPreprocessing.calc_K2S1DOR(process["online_preprocessed"].time[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_S[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_CO2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].Q_O2[process["online_preprocessed"].time.>7],
+                        process["online_preprocessed"].V_L[process["online_preprocessed"].time.>7],
+                        process["metadata_processed"]["parameters"]["x1"],
+                        qSmax_0 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        qSmax_1 = process["metadata_processed"]["parameters"]["qSmax_0"],
+                        kS_0 = 0.3,
+                        )
+    process["results_K2S1_monod_DOR"] = results_K2S1_monod
+    process["results_K2S1_without_corr_DOR"] = results_K2S1_without_corr
+    process["results_K2S1_no_kinetics_DOR"] = results_K2S1_no_kinetics
+end
+
+
+
+write_processes(data)
 
 @testset "BioPreprocessing.jl" begin
     # Write your tests here.

@@ -36,9 +36,12 @@ function write_processes(data)
         
         # save online data
         CSV.write(joinpath(base_data_path*key,"online_preprocessed.csv"), signals_online)
-        CSV.write(joinpath(base_data_path*key,"results_K2S1_monod.csv"), process["results_K2S1_monod"])
-        CSV.write(joinpath(base_data_path*key,"results_K2S1_without_corr.csv"), process["results_K2S1_without_corr"])
-        CSV.write(joinpath(base_data_path*key,"results_K2S1_no_kinetics.csv"), process["results_K2S1_no_kinetics"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_monod_C.csv"), process["results_K2S1_monod_C"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_without_corr_C.csv"), process["results_K2S1_without_corr_C"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_no_kinetics_C.csv"), process["results_K2S1_no_kinetics_C"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_monod_DOR.csv"), process["results_K2S1_monod_DOR"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_without_corr_DOR.csv"), process["results_K2S1_without_corr_DOR"])
+        CSV.write(joinpath(base_data_path*key,"results_K2S1_no_kinetics_DOR.csv"), process["results_K2S1_no_kinetics_DOR"])
 
         YAML.write_file(joinpath(base_data_path*key,"metadata_processed.yml"), metaData)
         

@@ -1,15 +1,27 @@
 processName: "20230503_HR01_F20_2"
 parameters:
+  fed_substrate_after_ind: 123.55643171195557
+  qSmax_0: 1.2
+  x0:
+    - 0.45
+    - 28.5
+    - 0.0
+    - 0.0
+  fed_substrate_total: 197.92923014609738
+  biomass_growth_after_ind: 22.82112007460428
+  Ind_sample: 12
+  c_SR: 460.0
+  yield_before_ind: 0.45959108554804107
+  yield_after_ind: 0.18470200019863525
   VL0: 1.5
   fed_substrate_at_ind: 74.37279843414181
-  fed_substrate_after_ind: 123.55643171195557
-  fed_substrate_total: 197.92923014609738
-  Ind_sample: 12
-  biomass_growth_after_ind: 22.82112007460428
-  yield_before_ind: 0.45959108554804107
+  x1:
+    - 15.0
+    - 0.0
+    - 0.0
+    - 0.0
   biomass_at_ind: 42.82598324130342
-  yield_after_ind: 0.18470200019863525
-  c_SR: 460.0
+  qSmax_1: 0.247
 ports_online:
   m_A: "WeightAcid"
   T: "ReactorTemperature"
